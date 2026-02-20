@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bistro Lumiere | 予約</title>
+  <link rel="stylesheet" href="style.css" />
+  <!--
+    XSS 対策のポイント:
+    ユーザーの入力値は style.css / app.js 側で
+    innerHTML ではなく textContent を使って描画します。
+    これにより悪意あるスクリプトが HTML として解釈されません。
+  -->
+</head>
+<body>
+
+  <!-- ローディングオーバーレイ（API 通信中に表示） -->
+  <div id="loading-overlay" class="loading-overlay hidden" aria-hidden="true">
+    <div class="loading-content">
+      <div class="spinner" aria-label="読み込み中"></div>
+      <p class="loading-text" id="loading-text">処理中...</p>
+    </div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-mark">✦</span>
+          <span class="logo-name">Bistro Lumiere</span>
+        </div>
+        <nav class="tab-nav" role="tablist">
+          <button class="tab-btn active" data-tab="reserve" role="tab" aria-selected="true">
+            予約する
+          </button>
+          <button class="tab-btn" data-tab="list" role="tab" aria-selected="false">
+            予約一覧
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- ── タブ①: 予約フォーム ──────────────────────────────── -->
+      <section id="tab-reserve" class="tab-panel" role="tabpanel">
+        <div class="section-header">
+          <h1 class="section-title">ご予約</h1>
+          <p class="section-desc">
+            Bistro Lumiere へのご来店を心よりお待ちしております。<br />
+            下記フォームよりご予約ください（全5テーブル・各最大4名様）。
+          </p>
+        </div>
+
+        <!-- 空席確認パネル -->
+        <div class="availability-panel">
+          <h2 class="panel-title">空席確認</h2>
+          <div class="availability-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="check-date">日付</label>
+                <input type="date" id="check-date" name="check-date" />
+              </div>
+              <div class="form-group">
+                <label for="check-time">時間</label>
+                <select id="check-time" name="check-time">
+                  <option value="">-- 選択 --</option>
+                  <option value="11:30">11:30</option>
+                  <option value="12:00">12:00</option>
+                  <option value="12:30">12:30</option>
+                  <option value="13:00">13:00</option>
+                  <option value="18:00">18:00</option>
+                  <option value="18:30">18:30</option>
+                  <option value="19:00">19:00</option>
+                  <option value="19:30">19:30</option>
+                  <option value="20:00">20:00</option>
+                  <option value="20:30">20:30</option>
+                </select>
+              </div>
+              <div class="form-group form-group--btn">
+                <button type="button" id="check-availability-btn" class="btn btn--secondary">
+                  確認する
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- 空席確認結果 -->
+          <div id="availability-result" class="availability-result hidden" aria-live="polite">
+          </div>
+        </div>
+
+        <!-- 予約フォーム -->
+        <div class="form-panel">
+          <h2 class="panel-title">予約情報の入力</h2>
+          <form id="reservation-form" novalidate>
+            <div class="form-grid">
+
+              <div class="form-group">
+                <label for="guest-name">お名前 <span class="required">*</span></label>
+                <input
+                  type="text"
+                  id="guest-name"
+                  name="guestName"
+                  placeholder="山田 太郎"
+                  autocomplete="name"
+                  maxlength="100"
+                  required
+                />
+                <span class="field-error" id="error-guest-name" aria-live="polite"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="guest-email">メールアドレス <span class="required">*</span></label>
+                <input
+                  type="email"
+                  id="guest-email"
+                  name="guestEmail"
+                  placeholder="example@email.com"
+                  autocomplete="email"
+                  required
+                />
+                <span class="field-error" id="error-guest-email" aria-live="polite"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="reservation-date">予約日 <span class="required">*</span></label>
+                <input
+                  type="date"
+                  id="reservation-date"
+                  name="reservationDate"
+                  required
+                />
+                <span class="field-error" id="error-reservation-date" aria-live="polite"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="reservation-time">予約時間 <span class="required">*</span></label>
+                <select id="reservation-time" name="reservationTime" required>
+                  <option value="">-- 時間を選択 --</option>
+                  <option value="11:30">11:30（ランチ）</option>
+                  <option value="12:00">12:00（ランチ）</option>
+                  <option value="12:30">12:30（ランチ）</option>
+                  <option value="13:00">13:00（ランチ）</option>
+                  <option value="18:00">18:00（ディナー）</option>
+                  <option value="18:30">18:30（ディナー）</option>
+                  <option value="19:00">19:00（ディナー）</option>
+                  <option value="19:30">19:30（ディナー）</option>
+                  <option value="20:00">20:00（ディナー）</option>
+                  <option value="20:30">20:30（ディナー）</option>
+                </select>
+                <span class="field-error" id="error-reservation-time" aria-live="polite"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="party-size">人数 <span class="required">*</span></label>
+                <select id="party-size" name="partySize" required>
+                  <option value="">-- 人数を選択 --</option>
+                  <option value="1">1名</option>
+                  <option value="2">2名</option>
+                  <option value="3">3名</option>
+                  <option value="4">4名</option>
+                </select>
+                <span class="field-error" id="error-party-size" aria-live="polite"></span>
+              </div>
+
+              <div class="form-group form-group--full">
+                <label for="special-request">特別なリクエスト（任意）</label>
+                <textarea
+                  id="special-request"
+                  name="specialRequest"
+                  placeholder="アレルギー情報、席のご希望などがあればお知らせください"
+                  rows="3"
+                  maxlength="500"
+                ></textarea>
+                <span class="char-count" id="special-request-count">0 / 500</span>
+              </div>
+
+            </div>
+
+            <!-- フォーム全体エラー表示エリア -->
+            <div id="form-error" class="alert alert--error hidden" role="alert" aria-live="assertive">
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary">
+                予約を確定する
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ── タブ②: 予約一覧 ──────────────────────────────────── -->
+      <section id="tab-list" class="tab-panel hidden" role="tabpanel">
+        <div class="section-header">
+          <h1 class="section-title">予約一覧</h1>
+          <button type="button" id="refresh-btn" class="btn btn--secondary btn--small">
+            更新
+          </button>
+        </div>
+
+        <!-- スケルトンローディング（一覧取得中に表示） -->
+        <div id="skeleton-list" class="skeleton-container hidden">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+
+        <!-- 予約一覧 -->
+        <div id="reservation-list" class="reservation-list" aria-live="polite">
+          <p class="empty-state">予約一覧を読み込み中...</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- 予約完了モーダル -->
+  <div id="success-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-icon">✓</div>
+      <h2 class="modal-title" id="modal-title">ご予約が完了しました</h2>
+      <div id="modal-body" class="modal-body"></div>
+      <button type="button" class="btn btn--primary" id="modal-close-btn">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2025 Bistro Lumiere. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  application-test.yml - テスト専用の設定ファイル                ║
+# ║                                                                  ║
+# ║  テスト実行時は「test」プロファイルが自動的に選ばれ、            ║
+# ║  本番設定 (application.yml) の代わりにこのファイルが読まれます。 ║
+# ║                                                                  ║
+# ║  本物の Neon DB ではなく H2 インメモリ DB を使うことで、         ║
+# ║  ・本番データを汚染しない                                        ║
+# ║  ・CI/CD 環境でも環境変数なしでテスト可能                        ║
+# ║  ・テスト実行が爆速になる                                        ║
+# ║  という三拍子が揃います。                                        ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+spring:
+  datasource:
+    # H2 インメモリデータベース。PostgreSQL の方言をエミュレートするモードで起動。
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # テスト開始時にテーブル作成、終了時に削除
+    show-sql: false           # テスト中はSQLを非表示にしてログを見やすく
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # H2 コンソールを有効化（テスト中にブラウザでDBを確認できる）
+  h2:
+    console:
+      enabled: true
+
+  # Security のテスト設定
+  security:
+    user:
+      name: test
+      password: test

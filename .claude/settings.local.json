@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn test:*)",
+      "Bash(cmd.exe /c \"where java 2>&1 & where mvn 2>&1 & java -version 2>&1 & mvn -version 2>&1\")",
+      "Bash(cmd.exe /c \"where java\")",
+      "Bash(cmd.exe /c \"where mvn\")",
+      "Bash(cmd.exe /c \"java -version\")",
+      "Bash(powershell.exe -Command \"where.exe java; java -version; where.exe mvn; mvn --version\")",
+      "Bash(export JAVA_HOME=\"/c/Users/ikere/AppData/Roaming/gdlauncher_next/java/17.0.1+12\")",
+      "Bash(export PATH=\"/c/Users/ikere/scoop/apps/maven/current/bin:$JAVA_HOME/bin:$PATH\")",
+      "Bash(java:*)",
+      "Bash(mvn:*)",
+      "Bash(export MAVEN_HOME=\"/c/Users/ikere/scoop/apps/maven/current\")",
+      "Bash(export PATH=\"$MAVEN_HOME/bin:$JAVA_HOME/bin:$PATH\")",
+      "Bash(JAVA_HOME=\"/c/Users/ikere/AppData/Roaming/gdlauncher_next/java/17.0.1+12\":*)",
+      "Bash(MVN=\"/c/Users/ikere/scoop/apps/maven/current/bin/mvn\")",
+      "Bash(PROJ=\"/c/Users/ikere/OneDrive/デスクトップ/プログラミング/spring/backend\":*)",
+      "Bash(JAVA_HOME=\"$JAVA_HOME\" \"$MVN\" -f \"$PROJ/pom.xml\" test)",
+      "Bash(JHOME=\"/c/Users/ikere/AppData/Roaming/gdlauncher_next/java/17.0.1+12\":*)",
+      "Bash(POM=\"/c/Users/ikere/OneDrive/デスクトップ/プログラミング/spring/backend/pom.xml\":*)",
+      "Bash(JAVA_HOME=\"$JHOME\" \"$MVN\" -f \"$POM\" test)",
+      "Bash(ECLIPSE_JDK=\"/c/Users/ikere/.p2/pool/plugins/org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_17.0.3.v20220515-1416/jre\":*)",
+      "Bash(JAVA_HOME=\"$ECLIPSE_JDK\" PATH=\"/c/Users/ikere/scoop/apps/maven/current/bin:$ECLIPSE_JDK/bin:$PATH\" /c/Users/ikere/scoop/apps/maven/current/bin/mvn:*)",
+      "Bash(cmd.exe /c \"C:\\\\tmp\\\\run_test.bat\")",
+      "Bash(# PowerShell:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git add:*)"
+    ]
+  },
+  "passiveMode": true,
+  "canUseInternet": false,
+  "autoApprove": {
+    "commands": false,
+    "fileRead": true,
+    "fileWrite": true
+  }
+}

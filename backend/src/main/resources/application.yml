@@ -1,0 +1,65 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  application.yml - アプリケーション設定ファイル                  ║
+# ║                                                                  ║
+# ║  Spring Boot の「設定コントロールパネル」です。                  ║
+# ║  DB接続情報・サーバーポート・ログレベルなど、                    ║
+# ║  アプリの動作を決める設定をここで一元管理します。                ║
+# ║                                                                  ║
+# ║  【重要】パスワードやDB URLはここに直書きしません！              ║
+# ║  ${環境変数名} の形式で参照することで、                          ║
+# ║  GitHub に push してもシークレット情報が漏れない設計にします。   ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+spring:
+  application:
+    name: bistro-lumiere-reservation
+
+  datasource:
+    # Neon (Serverless PostgreSQL) への接続URL
+    # 環境変数 DATABASE_URL に jdbc:postgresql://... 形式のURLを設定してください。
+    # 例: jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    # Hikari コネクションプール設定
+    # DBへの接続は高コストなため、接続を「プール（貯め置き）」して再利用します。
+    # Neonはサーバーレスなので、長時間アイドルの接続は自動的に切断される場合があります。
+    hikari:
+      connection-timeout: 30000        # 接続タイムアウト: 30秒
+      idle-timeout: 600000             # アイドルタイムアウト: 10分
+      max-lifetime: 1800000            # 接続の最大生存時間: 30分
+      maximum-pool-size: 5             # 同時接続数の上限（Neon の無料枠に合わせて控えめに）
+      minimum-idle: 1                  # 常時維持する最低接続数
+      # Neon はアイドル時に接続を切断するため、接続前に疎通確認を行います
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      # create-drop: 起動時にテーブルを作り直す（開発初期向け）
+      # update:      既存テーブルに差分を適用する（開発中向け）
+      # validate:    テーブル構造の確認のみ（本番向け）
+      # none:        何もしない（本番向け）
+      ddl-auto: update
+    show-sql: true    # 発行されるSQLをコンソールに表示（デバッグ用）
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true   # SQLを整形して表示
+
+server:
+  port: 8080
+  # エラーレスポンスにスタックトレースを含めない（セキュリティ対策）
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+logging:
+  level:
+    com.bistrolumiere: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

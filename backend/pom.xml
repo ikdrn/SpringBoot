@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║  Spring Boot Parent POM                                          ║
+    ║  「親設定」のイメージ。Spring Boot が管理するすべての           ║
+    ║  ライブラリのバージョンをここで一括管理してくれます。            ║
+    ║  自分でバージョンを調べて合わせる手間が省けるのが最大の恩恵。   ║
+    ╚══════════════════════════════════════════════════════════════════╝
+  -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.5</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.bistrolumiere</groupId>
+  <artifactId>reservation</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>bistro-lumiere-reservation</name>
+  <description>Bistro Lumiere - レストラン座席予約システム API</description>
+
+  <properties>
+    <!-- Java 17 を使用。Spring Boot 3.x は Java 17 以上が必須 -->
+    <java.version>17</java.version>
+  </properties>
+
+  <dependencies>
+    <!--
+      【spring-boot-starter-web】
+      REST API を作るための「オールインワンパック」。
+      内部的に Tomcat (Webサーバー)、Spring MVC (ルーティング)、
+      Jackson (JSON変換) などをまとめて提供してくれます。
+      これ1行書くだけで Web アプリが動く、Spring Boot の真骨頂。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!--
+      【spring-boot-starter-data-jpa】
+      データベース操作の自動化パック。
+      SQL を手書きしなくても、メソッド名から自動でクエリを生成してくれます。
+      さらに JPA (Java Persistence API) が SQL インジェクション対策の
+      プリペアドステートメントを自動で使ってくれるため、セキュリティも向上。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!--
+      【spring-boot-starter-validation】
+      入力値チェック（バリデーション）パック。
+      @NotBlank, @Min, @Future などのアノテーションを付けるだけで
+      「空欄禁止」「1以上の数字」「未来の日付のみ」などのルールを
+      コードほぼゼロで実現できます。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!--
+      【spring-boot-starter-security】
+      セキュリティ設定パック。今回は CSRF 無効化と CORS 設定のために導入。
+      REST API はステートレス（状態を持たない）なので CSRF は不要ですが、
+      Spring Security を使うことで XSS ヘッダー対策なども自動で有効になります。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+
+    <!--
+      【postgresql】
+      Neon (Serverless PostgreSQL) への接続ドライバー。
+      アプリと DB の「通訳」の役割を果たします。
+    -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!--
+      【lombok】
+      getter/setter/コンストラクタなどのボイラープレートコードを
+      アノテーション1つで自動生成してくれる便利ライブラリ。
+      コードが圧倒的にスッキリします。
+    -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!--
+      【テスト用: spring-boot-starter-test】
+      JUnit 5, Mockito, MockMvc など、テストに必要なツールをまとめて提供。
+      scope=test なので本番ビルドには含まれません。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!--
+      【テスト用: spring-security-test】
+      Spring Security が有効な状態でもテストできるようにするライブラリ。
+    -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!--
+      【テスト用: H2 インメモリデータベース】
+      テスト実行時は本物の Neon PostgreSQL を使わず、
+      メモリ上に存在する軽量な H2 DB を使います。
+      テストが終われば消えるので、本番データを汚染する心配がありません。
+    -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        Spring Boot Maven Plugin: `mvn spring-boot:run` でアプリを起動したり、
+        `mvn package` で実行可能な JAR ファイルを生成したりするためのプラグイン。
+      -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
