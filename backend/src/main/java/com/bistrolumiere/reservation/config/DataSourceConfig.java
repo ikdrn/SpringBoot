@@ -139,12 +139,58 @@ public class DataSourceConfig {
 
     /**
      * すでに jdbc:postgresql:// 形式の URL を持つ場合のビルダー。
-     * URL からユーザー情報は取れないため、別の環境変数から取得します。
+     *
+     * <p>
+     * 以下の2パターンを自動判別します：
+     * </p>
+     * <ul>
+     *   <li>パターンA: {@code jdbc:postgresql://host/db?user=xxx&password=yyy&sslmode=require}
+     *       → URLのクエリ文字列から user/password を抽出</li>
+     *   <li>パターンB: {@code jdbc:postgresql://host/db?sslmode=require}
+     *       → 別環境変数 DATABASE_USERNAME / DATABASE_PASSWORD を参照</li>
+     * </ul>
      */
     private DataSource buildFromJdbcUrl(String jdbcUrl) {
-        String username = System.getenv("DATABASE_USERNAME");
-        String password = System.getenv("DATABASE_PASSWORD");
-        return buildHikariDataSource(jdbcUrl, username, password);
+        // クエリ文字列に user= / password= が含まれているか確認
+        String username = extractQueryParam(jdbcUrl, "user");
+        String password = extractQueryParam(jdbcUrl, "password");
+
+        if (username != null && !username.isBlank()) {
+            // パターンA: URL 内に認証情報が含まれている
+            log.info("JDBC URL 内の user/password クエリパラメータを使用します");
+            // Hikari の setUsername/setPassword で上書きすると URL 内の値より優先されるため、
+            // クエリパラメータのみに頼る場合は null を渡す（HikariCP は URL の user= を尊重する）
+            return buildHikariDataSource(jdbcUrl, username, password);
+        }
+
+        // パターンB: 別の環境変数から取得
+        log.info("DATABASE_USERNAME / DATABASE_PASSWORD 環境変数を使用します");
+        String envUsername = System.getenv("DATABASE_USERNAME");
+        String envPassword = System.getenv("DATABASE_PASSWORD");
+        return buildHikariDataSource(jdbcUrl, envUsername, envPassword);
+    }
+
+    /**
+     * URL のクエリ文字列から指定したパラメーター値を取り出します。
+     *
+     * <p>例: {@code jdbc:postgresql://host/db?user=foo&sslmode=require} → "foo"</p>
+     *
+     * @param url       JDBC URL 文字列
+     * @param paramName 取得したいパラメーター名（例: "user", "password"）
+     * @return パラメーター値。見つからない場合は {@code null}
+     */
+    private String extractQueryParam(String url, String paramName) {
+        int queryStart = url.indexOf('?');
+        if (queryStart == -1) return null;
+
+        String query = url.substring(queryStart + 1);
+        for (String pair : query.split("&")) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2 && kv[0].equalsIgnoreCase(paramName)) {
+                return kv[1];
+            }
+        }
+        return null;
     }
 
     /**
