@@ -15,24 +15,32 @@ spring:
     name: bistro-lumiere-reservation
 
   datasource:
-    # Neon (Serverless PostgreSQL) への接続URL
-    # 環境変数 DATABASE_URL に jdbc:postgresql://... 形式のURLを設定してください。
-    # 例: jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    # ──────────────────────────────────────────────────────────────────────
+    # 【環境変数は DATABASE_URL の1つだけ設定すればOKです】
+    #
+    # Neon が発行する接続文字列をそのままコピー＆ペーストしてください。
+    # 例:
+    #   DATABASE_URL=postgresql://neondb_owner:パスワード@ep-xxx.neon.tech/neondb?sslmode=require
+    #
+    # DataSourceConfig.java が自動的に解析して JDBC 形式に変換します。
+    # ユーザー名・パスワードを別々に設定する必要はありません。
+    #
+    # ただし DATABASE_URL が未設定の場合（ローカル開発など）は
+    # 以下のフォールバック設定が使われます（テスト時は application-test.yml が優先）。
+    # ──────────────────────────────────────────────────────────────────────
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/bistro_lumiere}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
-    # Hikari コネクションプール設定
-    # DBへの接続は高コストなため、接続を「プール（貯め置き）」して再利用します。
-    # Neonはサーバーレスなので、長時間アイドルの接続は自動的に切断される場合があります。
+    # DataSourceConfig.java で DATABASE_URL が設定されている場合はそちらが優先されます。
+    # 以下の Hikari 設定は DATABASE_URL 未設定時のフォールバック用です。
     hikari:
-      connection-timeout: 30000        # 接続タイムアウト: 30秒
-      idle-timeout: 600000             # アイドルタイムアウト: 10分
-      max-lifetime: 1800000            # 接続の最大生存時間: 30分
-      maximum-pool-size: 5             # 同時接続数の上限（Neon の無料枠に合わせて控えめに）
-      minimum-idle: 1                  # 常時維持する最低接続数
-      # Neon はアイドル時に接続を切断するため、接続前に疎通確認を行います
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 5
+      minimum-idle: 1
       connection-test-query: SELECT 1
 
   jpa:

@@ -19,13 +19,42 @@
 // ── 設定 ─────────────────────────────────────────────────────────────
 /**
  * API のベース URL。
- * 本番環境では環境変数や設定ファイルから読み込む方が望ましいですが、
- * 今回はシンプルさのために定数として定義します。
- * VercelのDEPLOYMENT後は実際のバックエンドURLに書き換えてください。
+ * Vercel にデプロイすると /api/config エンドポイント（サーバーレス関数）から
+ * バックエンドの URL を自動取得します。
+ *
+ * 【仕組み】
+ *  ブラウザ → GET /api/config → Vercel サーバーレス関数 → { apiBaseUrl: "https://xxx.railway.app/api" }
+ *
+ * ローカル開発時は /api/config が存在しないため、
+ * フォールバックとして localhost:8080 を使います。
  */
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8080/api'
-  : '/api';  // 本番: リバースプロキシ経由の場合は相対パスでOK
+let API_BASE_URL = 'http://localhost:8080/api'; // デフォルト（ローカル開発用）
+
+/**
+ * Vercel の /api/config エンドポイントからバックエンド URL を取得します。
+ * ページ読み込み時に一度だけ呼ばれます。
+ */
+async function loadConfig() {
+  const isLocal = window.location.hostname === 'localhost'
+               || window.location.hostname === '127.0.0.1';
+
+  if (isLocal) {
+    // ローカルではそのまま localhost を使う
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const config = await res.json();
+      if (config.apiBaseUrl) {
+        API_BASE_URL = config.apiBaseUrl;
+      }
+    }
+  } catch {
+    // /api/config が存在しない環境（ローカル Live Server など）はスキップ
+  }
+}
 
 // ── DOM 要素のキャッシュ ──────────────────────────────────────────────
 // 毎回 querySelector を呼ぶのはコストがかかるため、起動時に一度取得してキャッシュ
@@ -639,5 +668,8 @@ function init() {
   });
 }
 
-// DOM が読み込まれたら初期化
-document.addEventListener('DOMContentLoaded', init);
+// DOM が読み込まれたら設定を取得してから初期化
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfig(); // バックエンド URL を Vercel 環境変数から取得
+  init();
+});
